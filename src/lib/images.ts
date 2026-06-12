@@ -17,4 +17,5 @@ export const ILLUSTRATIONS = {
   warmLibrary:
     'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=900&q=80&auto=format&fit=crop',
 } as const;
-export const DEMO_CHATS = [];
+
+export const DEMO_CHATS: any[] = [];
