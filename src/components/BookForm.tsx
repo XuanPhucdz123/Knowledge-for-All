@@ -1,8 +1,8 @@
 import clsx from 'clsx'
+import { useEffect, useState } from 'react'
 import { BOOK_CATEGORIES } from '../lib/constants'
 import { validateBookForm } from '../lib/validation'
 import type { BookCondition, CreateBookInput, ExchangeType } from '../types/book'
-import { GradientButton } from './GradientButton'
 
 interface BookFormProps {
   initial?: Partial<CreateBookInput>
@@ -15,6 +15,24 @@ interface BookFormProps {
   cameraSlot: React.ReactNode
 }
 
+const OTHER_CATEGORY_LABEL = 'Khác'
+const OTHER_CATEGORY_VALUE = '__other__'
+const CATEGORY_OPTIONS = BOOK_CATEGORIES.filter((category) => category !== OTHER_CATEGORY_LABEL)
+
+const liquidControlClass = clsx(
+  'w-full rounded-xl bg-white/5 px-4 py-2.5 text-white backdrop-blur-md',
+  'border border-white/10 outline-none transition-all',
+  'placeholder:text-white/40 focus:border-amber-500 focus:ring-1 focus:ring-amber-500',
+)
+
+function getInitialCategoryState(category?: string) {
+  if (!category) return { choice: '', custom: '' }
+  if ((BOOK_CATEGORIES as readonly string[]).includes(category)) {
+    return { choice: category, custom: '' }
+  }
+  return { choice: OTHER_CATEGORY_VALUE, custom: category }
+}
+
 export function BookForm({
   initial,
   onSubmit,
@@ -24,13 +42,24 @@ export function BookForm({
   submitLabel = 'Đăng sách',
   cameraSlot,
 }: BookFormProps) {
+  const initialCategory = getInitialCategoryState(initial?.category)
+  const [categoryChoice, setCategoryChoice] = useState(initialCategory.choice)
+  const [customCategory, setCustomCategory] = useState(initialCategory.custom)
+
+  useEffect(() => {
+    const next = getInitialCategoryState(initial?.category)
+    setCategoryChoice(next.choice)
+    setCustomCategory(next.custom)
+  }, [initial?.category])
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    const selectedCategory = fd.get('category') as string
     const data = {
       title: fd.get('title') as string,
       author: (fd.get('author') as string) || undefined,
-      category: fd.get('category') as string,
+      category: selectedCategory === OTHER_CATEGORY_VALUE ? customCategory.trim() : selectedCategory,
       condition: fd.get('condition') as BookCondition,
       exchangeType: fd.get('exchangeType') as ExchangeType,
       description: fd.get('description') as string,
@@ -73,15 +102,38 @@ export function BookForm({
           <select
             id="category"
             name="category"
-            defaultValue={initial?.category ?? ''}
+            value={categoryChoice}
+            onChange={(e) => {
+              setCategoryChoice(e.target.value)
+              if (e.target.value !== OTHER_CATEGORY_VALUE) setCustomCategory('')
+            }}
             required
-            className="w-full rounded-xl border border-glass bg-white/5 px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-yellow"
+            className={clsx(liquidControlClass, '[&>option]:bg-dark [&>option]:text-white')}
           >
             <option value="" disabled>Chọn thể loại</option>
-            {BOOK_CATEGORIES.map((c) => (
+            {CATEGORY_OPTIONS.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
+            <option value={OTHER_CATEGORY_VALUE}>{OTHER_CATEGORY_LABEL}</option>
           </select>
+
+          {categoryChoice === OTHER_CATEGORY_VALUE && (
+            <div className="mt-3">
+              <label htmlFor="customCategory" className="mb-1.5 block text-sm font-medium text-text-primary">
+                Nhập thể loại *
+              </label>
+              <input
+                id="customCategory"
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="Ví dụ: Tâm lý học, Nghệ thuật..."
+                required
+                autoFocus
+                className={liquidControlClass}
+              />
+            </div>
+          )}
         </div>
 
         <div>
@@ -93,7 +145,7 @@ export function BookForm({
             name="condition"
             defaultValue={initial?.condition ?? 'good'}
             required
-            className="w-full rounded-xl border border-glass bg-white/5 px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-yellow"
+            className={clsx(liquidControlClass, '[&>option]:bg-dark [&>option]:text-white')}
           >
             <option value="new">Mới</option>
             <option value="good">Tốt</option>
@@ -112,7 +164,7 @@ export function BookForm({
           name="exchangeType"
           defaultValue={initial?.exchangeType ?? 'share'}
           required
-          className="w-full rounded-xl border border-glass bg-white/5 px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-yellow"
+          className={clsx(liquidControlClass, '[&>option]:bg-dark [&>option]:text-white')}
         >
           <option value="share">Chia sẻ</option>
           <option value="exchange">Trao đổi</option>
@@ -132,7 +184,7 @@ export function BookForm({
           placeholder="Mô tả ngắn về sách (ít nhất 20 ký tự)"
           required
           minLength={20}
-          className="w-full resize-none rounded-xl border border-glass bg-white/5 px-4 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-yellow"
+          className={clsx(liquidControlClass, 'resize-none')}
         />
       </div>
 
@@ -143,7 +195,17 @@ export function BookForm({
         </label>
       )}
 
-      <GradientButton type="submit">{submitLabel}</GradientButton>
+      <button
+        type="submit"
+        className={clsx(
+          'inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold',
+          'border border-white/10 bg-white/5 text-white backdrop-blur-md outline-none transition-all',
+          'hover:border-amber-500/60 hover:bg-white/10 hover:shadow-lg hover:shadow-amber-500/10',
+          'focus:border-amber-500 focus:ring-1 focus:ring-amber-500',
+        )}
+      >
+        {submitLabel}
+      </button>
     </form>
   )
 }
@@ -172,10 +234,7 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className={clsx(
-          'w-full rounded-xl border border-glass bg-white/5 px-4 py-2.5 text-text-primary',
-          'placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-yellow',
-        )}
+        className={liquidControlClass}
       />
     </div>
   )

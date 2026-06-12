@@ -10,31 +10,11 @@ export const ILLUSTRATIONS = {
     'https://images.unsplash.com/photo-1524995998253-2314e69e3641?w=600&q=80&auto=format&fit=crop',
   community:
     'https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=600&q=80&auto=format&fit=crop',
-} as const
-
-export const DEMO_CHATS = [
-  {
-    name: 'Lan Anh',
-    avatar: '📚',
-    book: 'Đắc Nhân Tâm',
-    preview: 'Mình có thể đổi với "Nhà Giả Kim" được không?',
-    time: '2 phút',
-    unread: 2,
-  },
-  {
-    name: 'Minh Tuấn',
-    avatar: '📖',
-    book: 'Sapiens',
-    preview: 'Ok, hẹn gặp ở thư viện lúc 5h chiều nhé!',
-    time: '15 phút',
-    unread: 0,
-  },
-  {
-    name: 'Thu Hà',
-    avatar: '✨',
-    book: 'Atomic Habits',
-    preview: 'Sách còn rất mới, mình cho mượn 2 tuần nha.',
-    time: '1 giờ',
-    unread: 1,
-  },
-] as const
+  defaultCover:
+    'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=700&q=80&auto=format&fit=crop',
+  uploadDesk:
+    'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=900&q=80&auto=format&fit=crop',
+  warmLibrary:
+    'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=900&q=80&auto=format&fit=crop',
+} as const;
+export const DEMO_CHATS = [];

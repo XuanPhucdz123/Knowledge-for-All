@@ -4,9 +4,11 @@ import { motion } from 'framer-motion'
 import { useCallback, useRef } from 'react'
 import { CONDITION_LABELS, EXCHANGE_LABELS, STATUS_LABELS } from '../lib/constants'
 import { formatDistance } from '../lib/geo'
+import { ILLUSTRATIONS } from '../lib/images'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import type { BookWithDistance } from '../types/book'
 import { Button } from './Button'
+import { ImageWithSkeleton } from './ImageWithSkeleton'
 
 interface BookCardProps {
   book: BookWithDistance
@@ -35,17 +37,17 @@ export function BookCard({
       const rect = cardRef.current.getBoundingClientRect()
       const x = (e.clientX - rect.left) / rect.width - 0.5
       const y = (e.clientY - rect.top) / rect.height - 0.5
-      cardRef.current.style.transform = `perspective(800px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`
+      cardRef.current.style.transform = `perspective(800px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) scale(1.02)`
     },
     [reduced, isTouch],
   )
 
   const handleLeave = useCallback(() => {
     if (!cardRef.current) return
-    cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0)'
+    cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0) scale(1)'
   }, [])
 
-  const imageUrl = book.imageUrls[0]
+  const imageUrl = book.imageUrls[0]?.trim() || ILLUSTRATIONS.defaultCover
 
   return (
     <motion.article
@@ -54,24 +56,21 @@ export function BookCard({
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className={clsx(
-        'glass-card group overflow-hidden rounded-card transition-transform duration-300 lg:rounded-card-lg',
+        'glass-card group overflow-hidden rounded-card border border-white/10 transition-all duration-300 ease-out lg:rounded-card-lg',
+        'hover:-translate-y-1 hover:scale-[1.02] hover:border-amber-400/40 hover:shadow-2xl hover:shadow-amber-500/10 hover:ring-1 hover:ring-amber-400/20',
         compact ? 'w-[220px]' : 'w-full',
       )}
       style={{ willChange: reduced ? undefined : 'transform' }}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-white/5">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={`Bìa sách ${book.title}`}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-text-muted">
-            Không có ảnh
-          </div>
-        )}
+        <ImageWithSkeleton
+          src={imageUrl}
+          fallbackSrc={ILLUSTRATIONS.defaultCover}
+          alt={`Bìa sách ${book.title}`}
+          loading="lazy"
+          wrapperClassName="h-full w-full"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
         <span className="absolute left-3 top-3 rounded-full bg-accent-purple/90 px-3 py-1 text-xs font-semibold text-white">
           {EXCHANGE_LABELS[book.exchangeType]}
         </span>

@@ -1,15 +1,25 @@
 import { MessageCircle, Send } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/EmptyState'
+import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
 import { useMessages } from '../hooks/useMessages'
 import type { ChatThread } from '../types/message'
 
 export function MessagesPage() {
   const { user } = useAuth()
-  const { threads, loading, getThreadMessages, sendMessage } = useMessages(user?.id, user?.fullName)
+  const { showToast } = useToast()
+  const [searchParams] = useSearchParams()
+  const { threads, loading, error, getThreadMessages, sendMessage } = useMessages(user?.id, user?.fullName)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    const requestedThread = searchParams.get('thread')
+    if (requestedThread) setActiveId(requestedThread)
+  }, [searchParams])
 
   const active = threads.find((t) => t.id === activeId) ?? threads[0] ?? null
   const activeMessages = active ? getThreadMessages(active.id) : []
@@ -19,8 +29,15 @@ export function MessagesPage() {
 
   const handleSend = async () => {
     if (!active || !draft.trim()) return
-    await sendMessage(active.id, draft)
-    setDraft('')
+    setSending(true)
+    try {
+      await sendMessage(active.id, draft)
+      setDraft('')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Không thể gửi tin nhắn', 'error')
+    } finally {
+      setSending(false)
+    }
   }
 
   if (loading) {
@@ -28,6 +45,16 @@ export function MessagesPage() {
       <div className="flex justify-center py-20">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-yellow border-t-transparent" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={<MessageCircle className="h-12 w-12 text-accent-purple" />}
+        title="Không thể tải tin nhắn"
+        description={error}
+      />
     )
   }
 
@@ -122,12 +149,12 @@ export function MessagesPage() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Nhập tin nhắn..."
-                className="flex-1 rounded-full border border-glass bg-white/5 px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-yellow"
+                className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white backdrop-blur-md placeholder:text-white/40 outline-none transition-all focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
               />
               <button
                 type="submit"
-                disabled={!draft.trim()}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-yellow text-dark transition-opacity hover:brightness-110 disabled:opacity-40"
+                disabled={!draft.trim() || sending}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md outline-none transition-all hover:border-amber-500/60 hover:bg-white/10 hover:text-amber-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 disabled:opacity-40"
                 aria-label="Gửi"
               >
                 <Send className="h-4 w-4" />
